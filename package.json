@@ -1,0 +1,38 @@
+{
+  "name": "@song-chart/scs",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --format esm,cjs --watch",
+    "test:run": "vitest run"
+  },
+  "keywords": [
+    "music",
+    "chord",
+    "theory",
+    "song",
+    "chart",
+    "chordpro",
+    "parser",
+    "renderer",
+    "validator"
+  ],
+  "author": "Aaron Phillips",
+  "license": "Open-Source",
+  "description": "A library that extends the ChordPro language to support music theory validation and transposition.",
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
+  }
+}
