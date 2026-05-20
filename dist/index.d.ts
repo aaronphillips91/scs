@@ -94,4 +94,11 @@ declare function validateChord(chord: ChordNode): {
     warnings: string[];
 };
 
-export { type ChordNode, type LineNode, type Mode, type Modifier, SCSError, type SectionNode, type SegmentNode, type SongAST, chordProToSCS, chordToNode, nodeToSCS, parseChord, parseSection, parseSong, renderChord, renderChordNNS, renderChordNashville, renderLine, renderLineNNS, renderLineNashville, renderSection, renderSectionAsNashville, renderSong, renderSongAsNashville, serializeSection, serializeSong, validateChord };
+interface LineLengthViolation {
+    lineIndex: number;
+    raw: string;
+    contentLength: number;
+}
+declare function checkLineLengths(content: string, maxChars?: number): LineLengthViolation[];
+
+export { type ChordNode, type LineLengthViolation, type LineNode, type Mode, type Modifier, SCSError, type SectionNode, type SegmentNode, type SongAST, checkLineLengths, chordProToSCS, chordToNode, nodeToSCS, parseChord, parseSection, parseSong, renderChord, renderChordNNS, renderChordNashville, renderLine, renderLineNNS, renderLineNashville, renderSection, renderSectionAsNashville, renderSong, renderSongAsNashville, serializeSection, serializeSong, validateChord };

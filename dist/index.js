@@ -21,6 +21,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var index_exports = {};
 __export(index_exports, {
   SCSError: () => SCSError,
+  checkLineLengths: () => checkLineLengths,
   chordProToSCS: () => chordProToSCS,
   chordToNode: () => chordToNode,
   nodeToSCS: () => nodeToSCS,
@@ -761,9 +762,19 @@ function validateChord(chord) {
     warnings
   };
 }
+
+// src/validator/validateLineLength.ts
+function checkLineLengths(content, maxChars = 40) {
+  return content.split("\n").reduce((acc, raw, i) => {
+    const stripped = raw.replace(/\[([^\]]+)\]/g, "");
+    if (stripped.length > maxChars) acc.push({ lineIndex: i, raw, contentLength: stripped.length });
+    return acc;
+  }, []);
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   SCSError,
+  checkLineLengths,
   chordProToSCS,
   chordToNode,
   nodeToSCS,

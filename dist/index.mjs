@@ -716,8 +716,18 @@ function validateChord(chord) {
     warnings
   };
 }
+
+// src/validator/validateLineLength.ts
+function checkLineLengths(content, maxChars = 40) {
+  return content.split("\n").reduce((acc, raw, i) => {
+    const stripped = raw.replace(/\[([^\]]+)\]/g, "");
+    if (stripped.length > maxChars) acc.push({ lineIndex: i, raw, contentLength: stripped.length });
+    return acc;
+  }, []);
+}
 export {
   SCSError,
+  checkLineLengths,
   chordProToSCS,
   chordToNode,
   nodeToSCS,

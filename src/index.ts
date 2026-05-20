@@ -12,3 +12,4 @@ export * from "./renderer/renderSong";
 export * from "./serializer/serializeSection";
 export * from "./serializer/serializeSong";
 export * from "./validator/validateChord";
+export * from "./validator/validateLineLength";
