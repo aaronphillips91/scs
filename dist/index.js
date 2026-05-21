@@ -24,6 +24,7 @@ __export(index_exports, {
   checkLineLengths: () => checkLineLengths,
   chordProToSCS: () => chordProToSCS,
   chordToNode: () => chordToNode,
+  getCapoSuggestions: () => getCapoSuggestions,
   nodeToSCS: () => nodeToSCS,
   parseChord: () => parseChord,
   parseSection: () => parseSection,
@@ -73,6 +74,44 @@ var NOTE_TO_INDEX = {
   Bb: 10,
   B: 11
 };
+var SHARP_CHROMATIC = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B"
+];
+var FLAT_CHROMATIC = [
+  "C",
+  "Db",
+  "D",
+  "Eb",
+  "E",
+  "F",
+  "Gb",
+  "G",
+  "Ab",
+  "A",
+  "Bb",
+  "B"
+];
+var FLAT_MAJOR_KEYS = ["F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"];
+var FLAT_MINOR_KEYS = ["D", "G", "C", "F", "Bb", "Eb", "Ab"];
+function transposeKey(key, semitones, mode) {
+  const index = NOTE_TO_INDEX[key];
+  if (index === void 0) throw new Error(`Invalid key: ${key}`);
+  const newIndex = ((index - semitones) % 12 + 12) % 12;
+  const flatResult = FLAT_CHROMATIC[newIndex];
+  const useFlats = mode === "major" ? FLAT_MAJOR_KEYS.includes(flatResult) : FLAT_MINOR_KEYS.includes(flatResult);
+  return useFlats ? flatResult : SHARP_CHROMATIC[newIndex];
+}
 
 // src/music/quality.ts
 function getScaleQuality(degree, mode) {
@@ -246,6 +285,24 @@ function convertLine(line, key, sourceMode, targetMode) {
 }
 function chordProToSCS(input, sourceKey, sourceMode = "major", targetMode = sourceMode) {
   return input.split("\n").map((line) => convertLine(line, sourceKey, sourceMode, targetMode)).join("\n");
+}
+
+// src/music/capo.ts
+var GUITAR_FRIENDLY_MAJOR = ["G", "D", "A", "E", "C", "F"];
+var GUITAR_FRIENDLY_MINOR = ["A", "E", "D", "G", "C"];
+var COMMON_MAJOR = /* @__PURE__ */ new Set(["G", "D", "A", "E"]);
+var COMMON_MINOR = /* @__PURE__ */ new Set(["A", "E", "D"]);
+function getCapoSuggestions(key, mode) {
+  const friendly = mode === "major" ? GUITAR_FRIENDLY_MAJOR : GUITAR_FRIENDLY_MINOR;
+  const common = mode === "major" ? COMMON_MAJOR : COMMON_MINOR;
+  const results = [];
+  for (let capo = 1; capo <= 7; capo++) {
+    const playingKey = transposeKey(key, capo, mode);
+    if (friendly.includes(playingKey)) {
+      results.push({ capo, playingKey, common: common.has(playingKey) });
+    }
+  }
+  return results;
 }
 
 // src/parser/parseChord.ts
@@ -458,36 +515,6 @@ function parseSong(input, sourceKey, sourceMode = "major", targetMode) {
 }
 
 // src/renderer/renderChord.ts
-var SHARP_CHROMATIC = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B"
-];
-var FLAT_CHROMATIC = [
-  "C",
-  "Db",
-  "D",
-  "Eb",
-  "E",
-  "F",
-  "Gb",
-  "G",
-  "Ab",
-  "A",
-  "Bb",
-  "B"
-];
-var FLAT_MAJOR_KEYS = ["F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"];
-var FLAT_MINOR_KEYS = ["D", "G", "C", "F", "Bb", "Eb", "Ab"];
 function prefersFlats(key, mode) {
   return mode === "major" ? FLAT_MAJOR_KEYS.includes(key) : FLAT_MINOR_KEYS.includes(key);
 }
@@ -698,15 +725,17 @@ function renderSongAsNashville(song, key, mode) {
 }
 
 // src/renderer/renderSection.ts
-function renderSection(input, key, mode, nns = false) {
+function renderSection(input, key, mode, nns = false, capo = 0) {
+  const renderKey = capo > 0 ? transposeKey(key, capo, mode) : key;
   const lines = parseSection(input);
-  return lines.map((line) => nns ? renderLineNNS(line.segments, mode) : renderLine(line.segments, key, mode)).join("\n\n");
+  return lines.map((line) => nns ? renderLineNNS(line.segments, mode) : renderLine(line.segments, renderKey, mode)).join("\n\n");
 }
 
 // src/renderer/renderSong.ts
-function renderSong(song, key, mode, nns = false) {
-  const renderKey = key ?? song.tonalContext.key;
+function renderSong(song, key, mode, nns = false, capo = 0) {
+  const resolvedKey = key ?? song.tonalContext.key;
   const renderMode = mode ?? song.tonalContext.mode;
+  const renderKey = capo > 0 ? transposeKey(resolvedKey, capo, renderMode) : resolvedKey;
   return song.sections.map((section) => {
     const renderedLines = section.lines.map((line) => nns ? renderLineNNS(line.segments, renderMode) : renderLine(line.segments, renderKey, renderMode)).join("\n\n");
     const header = section.label ? `[${section.label}]
@@ -777,6 +806,7 @@ function checkLineLengths(content, maxChars = 40) {
   checkLineLengths,
   chordProToSCS,
   chordToNode,
+  getCapoSuggestions,
   nodeToSCS,
   parseChord,
   parseSection,

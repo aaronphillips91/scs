@@ -1,9 +1,11 @@
 import type { SongAST, Mode } from "../ast/types";
 import { renderLine, renderLineNNS } from "./renderLine";
+import { transposeKey } from "../music/theory";
 
-export function renderSong(song: SongAST, key?: string, mode?: Mode, nns = false): string {
-  const renderKey = key ?? song.tonalContext.key;
+export function renderSong(song: SongAST, key?: string, mode?: Mode, nns = false, capo = 0): string {
+  const resolvedKey = key ?? song.tonalContext.key;
   const renderMode = mode ?? song.tonalContext.mode;
+  const renderKey = capo > 0 ? transposeKey(resolvedKey, capo, renderMode) : resolvedKey;
 
   return song.sections
     .map((section) => {

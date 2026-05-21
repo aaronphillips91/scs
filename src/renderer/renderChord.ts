@@ -1,40 +1,7 @@
 import type { ChordNode, Mode } from "../ast/types";
-import { NOTE_TO_INDEX } from "../music/theory";
+import { NOTE_TO_INDEX, SHARP_CHROMATIC, FLAT_CHROMATIC, FLAT_MAJOR_KEYS, FLAT_MINOR_KEYS } from "../music/theory";
 import { getScaleQuality, qualityIsImplied } from "../music/quality";
 import { SCSError } from "../errors";
-
-const SHARP_CHROMATIC = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B",
-];
-
-const FLAT_CHROMATIC = [
-  "C",
-  "Db",
-  "D",
-  "Eb",
-  "E",
-  "F",
-  "Gb",
-  "G",
-  "Ab",
-  "A",
-  "Bb",
-  "B",
-];
-
-const FLAT_MAJOR_KEYS = ["F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"];
-const FLAT_MINOR_KEYS = ["D", "G", "C", "F", "Bb", "Eb", "Ab"];
 
 function prefersFlats(key: string, mode: Mode): boolean {
   return mode === "major"

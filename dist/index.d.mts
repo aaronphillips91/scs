@@ -52,6 +52,13 @@ declare function chordToNode(chord: string, key: string, sourceMode: Mode, targe
 declare function nodeToSCS(node: ChordNode, mode: Mode): string;
 declare function chordProToSCS(input: string, sourceKey: string, sourceMode?: Mode, targetMode?: Mode): string;
 
+type CapoSuggestion = {
+    capo: number;
+    playingKey: string;
+    common: boolean;
+};
+declare function getCapoSuggestions(key: string, mode: Mode): CapoSuggestion[];
+
 /**
  * Parse a single SCS chord token into a ChordNode
  */
@@ -80,9 +87,9 @@ declare function renderLineNashville(segments: Segment[], key: string, mode: Mod
 declare function renderSectionAsNashville(input: string, key: string, mode: Mode): string;
 declare function renderSongAsNashville(song: SongAST, key?: string, mode?: Mode): string;
 
-declare function renderSection(input: string, key: string, mode: Mode, nns?: boolean): string;
+declare function renderSection(input: string, key: string, mode: Mode, nns?: boolean, capo?: number): string;
 
-declare function renderSong(song: SongAST, key?: string, mode?: Mode, nns?: boolean): string;
+declare function renderSong(song: SongAST, key?: string, mode?: Mode, nns?: boolean, capo?: number): string;
 
 declare function serializeSection(lines: LineNode[]): string;
 
@@ -101,4 +108,4 @@ interface LineLengthViolation {
 }
 declare function checkLineLengths(content: string, maxChars?: number): LineLengthViolation[];
 
-export { type ChordNode, type LineLengthViolation, type LineNode, type Mode, type Modifier, SCSError, type SectionNode, type SegmentNode, type SongAST, checkLineLengths, chordProToSCS, chordToNode, nodeToSCS, parseChord, parseSection, parseSong, renderChord, renderChordNNS, renderChordNashville, renderLine, renderLineNNS, renderLineNashville, renderSection, renderSectionAsNashville, renderSong, renderSongAsNashville, serializeSection, serializeSong, validateChord };
+export { type CapoSuggestion, type ChordNode, type LineLengthViolation, type LineNode, type Mode, type Modifier, SCSError, type SectionNode, type SegmentNode, type SongAST, checkLineLengths, chordProToSCS, chordToNode, getCapoSuggestions, nodeToSCS, parseChord, parseSection, parseSong, renderChord, renderChordNNS, renderChordNashville, renderLine, renderLineNNS, renderLineNashville, renderSection, renderSectionAsNashville, renderSong, renderSongAsNashville, serializeSection, serializeSong, validateChord };

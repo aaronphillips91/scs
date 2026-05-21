@@ -1,6 +1,7 @@
 export * from "./ast/types";
 export * from "./errors";
 export * from "./import/chordPro";
+export * from "./music/capo";
 export * from "./parser/parseChord";
 export * from "./parser/parseSection";
 export * from "./parser/parseSong";
