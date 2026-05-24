@@ -3,6 +3,8 @@ export type Mode = "major" | "minor";
 export type SongAST = {
   id: string;
   title: string;
+  artist?: string;
+  tempo?: number;
 
   tonalContext: {
     key: string;

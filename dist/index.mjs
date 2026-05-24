@@ -367,8 +367,10 @@ function parseKeyDirective(value) {
 function parseDirective(line) {
   const match = line.match(/^\{([^:}]+)(?::([^}]*))?\}$/);
   if (!match) return null;
+  const rawName = match[1].trim();
   return {
-    name: match[1].trim().toLowerCase(),
+    rawName,
+    name: rawName.toLowerCase(),
     value: (match[2] ?? "").trim()
   };
 }
@@ -399,6 +401,8 @@ var SECTION_END_DIRECTIVES = /* @__PURE__ */ new Set([
 function parseSong(input, sourceKey, sourceMode = "major", targetMode) {
   const lines = input.split("\n");
   let title = "Untitled";
+  let artist;
+  let tempo;
   let resolvedKey = sourceKey;
   let resolvedSourceMode = sourceMode;
   let resolvedTargetMode = targetMode ?? sourceMode;
@@ -436,6 +440,15 @@ function parseSong(input, sourceKey, sourceMode = "major", targetMode) {
         if (!hasExplicitTargetMode) resolvedTargetMode = parsed.mode;
         continue;
       }
+      if (name === "artist" || name === "a") {
+        artist = value || void 0;
+        continue;
+      }
+      if (name === "tempo") {
+        const parsed = parseInt(value, 10);
+        if (!isNaN(parsed) && parsed > 0) tempo = parsed;
+        continue;
+      }
       if (name === "comment" || name === "c") {
         flushSection();
         currentLabel = value;
@@ -451,6 +464,11 @@ function parseSong(input, sourceKey, sourceMode = "major", targetMode) {
         currentLabel = "";
         continue;
       }
+      if (value === "") {
+        flushSection();
+        currentLabel = directive.rawName;
+        continue;
+      }
       continue;
     }
     currentContent.push(line);
@@ -459,6 +477,8 @@ function parseSong(input, sourceKey, sourceMode = "major", targetMode) {
   return {
     id: generateId(),
     title,
+    ...artist !== void 0 ? { artist } : {},
+    ...tempo !== void 0 ? { tempo } : {},
     tonalContext: {
       key: resolvedKey,
       mode: resolvedTargetMode

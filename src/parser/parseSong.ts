@@ -14,11 +14,13 @@ function parseKeyDirective(value: string): { key: string; mode: Mode } {
   return { key: trimmed, mode: "major" };
 }
 
-function parseDirective(line: string): { name: string; value: string } | null {
+function parseDirective(line: string): { name: string; rawName: string; value: string } | null {
   const match = line.match(/^\{([^:}]+)(?::([^}]*))?\}$/);
   if (!match) return null;
+  const rawName = match[1]!.trim();
   return {
-    name: match[1]!.trim().toLowerCase(),
+    rawName,
+    name: rawName.toLowerCase(),
     value: (match[2] ?? "").trim(),
   };
 }
@@ -61,6 +63,8 @@ export function parseSong(
   const lines = input.split("\n");
 
   let title = "Untitled";
+  let artist: string | undefined;
+  let tempo: number | undefined;
   let resolvedKey = sourceKey;
   let resolvedSourceMode = sourceMode;
   // When targetMode is not explicitly provided, it tracks sourceMode (including from directives)
@@ -108,6 +112,17 @@ export function parseSong(
         continue;
       }
 
+      if (name === "artist" || name === "a") {
+        artist = value || undefined;
+        continue;
+      }
+
+      if (name === "tempo") {
+        const parsed = parseInt(value, 10);
+        if (!isNaN(parsed) && parsed > 0) tempo = parsed;
+        continue;
+      }
+
       if (name === "comment" || name === "c") {
         flushSection();
         currentLabel = value;
@@ -126,7 +141,15 @@ export function parseSong(
         continue;
       }
 
-      continue; // unknown directives are ignored
+      // Shorthand section syntax: {SectionName} with no colon/value opens a section.
+      // The raw-case name is used as the label so {Verse 1} → "Verse 1".
+      if (value === "") {
+        flushSection();
+        currentLabel = directive.rawName;
+        continue;
+      }
+
+      continue; // unknown directives with a value are ignored
     }
 
     currentContent.push(line);
@@ -137,6 +160,8 @@ export function parseSong(
   return {
     id: generateId(),
     title,
+    ...(artist !== undefined ? { artist } : {}),
+    ...(tempo !== undefined ? { tempo } : {}),
     tonalContext: {
       key: resolvedKey,
       mode: resolvedTargetMode,

@@ -2,6 +2,8 @@ type Mode = "major" | "minor";
 type SongAST = {
     id: string;
     title: string;
+    artist?: string;
+    tempo?: number;
     tonalContext: {
         key: string;
         mode: Mode;

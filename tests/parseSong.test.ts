@@ -122,3 +122,93 @@ describe("parseSong — chord conversion", () => {
     expect(chords[0].chord?.quality).toBeUndefined(); // M quality omitted in SCS
   });
 });
+
+describe("parseSong — Artist and Tempo directives", () => {
+  it("parses {Artist:} directive and sets artist on AST", () => {
+    const song = parseSong("{title: My Song}\n{Artist: Aaron Phillips}\n[G]test", "G");
+    expect(song.artist).toBe("Aaron Phillips");
+  });
+
+  it("parses {Tempo:} directive and sets tempo on AST", () => {
+    const song = parseSong("{title: My Song}\n{Tempo: 120}\n[G]test", "G");
+    expect(song.tempo).toBe(120);
+  });
+
+  it("artist is undefined when directive is absent", () => {
+    const song = parseSong("[G]test", "G");
+    expect(song.artist).toBeUndefined();
+  });
+
+  it("tempo is undefined when directive is absent", () => {
+    const song = parseSong("[G]test", "G");
+    expect(song.tempo).toBeUndefined();
+  });
+
+  it("ignores non-numeric tempo values", () => {
+    const song = parseSong("{Tempo: fast}\n[G]test", "G");
+    expect(song.tempo).toBeUndefined();
+  });
+
+  it("parses all four header directives together", () => {
+    const input = [
+      "{Title: I Can't Hear A Word}",
+      "{Artist: Aaron Phillips}",
+      "{Key: G}",
+      "{Tempo: 96}",
+      "{Verse}",
+      "[G]word",
+    ].join("\n");
+    const song = parseSong(input, "G");
+    expect(song.title).toBe("I Can't Hear A Word");
+    expect(song.artist).toBe("Aaron Phillips");
+    expect(song.tempo).toBe(96);
+    expect(song.tonalContext.key).toBe("G");
+  });
+});
+
+describe("parseSong — simplified section shorthand", () => {
+  it("opens a section from a bare {SectionName} tag", () => {
+    const input = "{Verse}\n[G]Amazing grace";
+    const song = parseSong(input, "G");
+    expect(song.sections).toHaveLength(1);
+    expect(song.sections[0].label).toBe("Verse");
+  });
+
+  it("uses the raw-case name as the label", () => {
+    const song = parseSong("{Verse 1}\n[G]line", "G");
+    expect(song.sections[0].label).toBe("Verse 1");
+  });
+
+  it("closes the previous section when a new shorthand tag appears", () => {
+    const input = "{Verse}\n[G]line\n{Chorus}\n[C]line";
+    const song = parseSong(input, "G");
+    expect(song.sections).toHaveLength(2);
+    expect(song.sections[0].label).toBe("Verse");
+    expect(song.sections[1].label).toBe("Chorus");
+  });
+
+  it("closes the section at EOF without an explicit end tag", () => {
+    const input = "{Intro}\n[Em] [Csus2] [G] [G/F#]";
+    const song = parseSong(input, "G");
+    expect(song.sections).toHaveLength(1);
+    expect(song.sections[0].label).toBe("Intro");
+    expect(song.sections[0].lines.length).toBeGreaterThan(0);
+  });
+
+  it("shorthand and verbose syntax produce same section count", () => {
+    const shorthand = "{Verse}\n[G]line\n{Chorus}\n[C]line";
+    const verbose = "{start_of_verse}\n[G]line\n{end_of_verse}\n{start_of_chorus}\n[C]line\n{end_of_chorus}";
+    const a = parseSong(shorthand, "G");
+    const b = parseSong(verbose, "G");
+    expect(a.sections).toHaveLength(b.sections.length);
+    expect(a.sections[0].label).toBe(b.sections[0].label);
+    expect(a.sections[1].label).toBe(b.sections[1].label);
+  });
+
+  it("ignores unknown directives that have a value (non-empty)", () => {
+    const song = parseSong("{SomeDirective: some value}\n[G]test", "G");
+    expect(song.sections).toHaveLength(1);
+    // directive with value is skipped — content is in an unlabeled section
+    expect(song.sections[0].label).toBe("");
+  });
+});
